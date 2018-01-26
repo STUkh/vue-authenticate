@@ -10,6 +10,7 @@ export default {
   loginUrl: '/auth/login',
   registerUrl: '/auth/register',
   logoutUrl: null,
+  replaceWindow: false,
   storageType: 'localStorage',
   storageNamespace: 'vue-authenticate',
   cookieStorage: {
@@ -24,31 +25,13 @@ export default {
    * Default request interceptor for Axios library
    * @context {VueAuthenticate}
    */
-  bindRequestInterceptor: function ($auth) {
-    const tokenHeader = $auth.options.tokenHeader;
-
-    $auth.$http.interceptors.request.use((config) => {
-      if ($auth.isAuthenticated()) {
-        config.headers[tokenHeader] = [
-          $auth.options.tokenType, $auth.getToken()
-        ].join(' ')
-      } else {
-        delete config.headers[tokenHeader]
-      }
-      return config
-    })
-  },
+  bindRequestInterceptor: function ($auth) {},
 
   /**
    * Default response interceptor for Axios library
    * @contect {VueAuthenticate}
    */
-  bindResponseInterceptor: function ($auth) {
-    $auth.$http.interceptors.response.use((response) => {
-      $auth.setToken(response)
-      return response
-    })
-  },
+  bindResponseInterceptor: function ($auth) {},
 
   providers: {
     facebook: {
@@ -148,6 +131,18 @@ export default {
       display: 'popup',
       oauthType: '2.0',
       popupOptions: { width: 500, height: 560 }
+    },
+
+    auth0: {
+      name: 'auth0',
+      url: '/auth/auth0',
+      authorizationEndpoint: 'https://DOMAIN.auth0.com/authorize',
+      audience: 'AUDIENCE',
+      clientId: 'CLIEND_ID',
+      oauthType: '2.0',
+      redirectUri: window.location.origin,
+      responseType: 'token',
+      optionalUrlParams: ['audience']
     },
 
     oauth1: {

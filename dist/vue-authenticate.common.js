@@ -83,10 +83,10 @@ function objectExtend(a, b) {
 
 /**
  * Assemble url from two segments
- * 
+ *
  * @author Sahat Yalkabov <https://github.com/sahat>
  * @copyright Method taken from https://github.com/sahat/satellizer
- * 
+ *
  * @param  {String} baseUrl Base url
  * @param  {String} url     URI
  * @return {String}
@@ -108,10 +108,10 @@ function joinUrl(baseUrl, url) {
 
 /**
  * Get full path based on current location
- * 
+ *
  * @author Sahat Yalkabov <https://github.com/sahat>
  * @copyright Method taken from https://github.com/sahat/satellizer
- * 
+ *
  * @param  {Location} location
  * @return {String}
  */
@@ -124,10 +124,10 @@ function getFullUrlPath(location) {
 
 /**
  * Parse query string variables
- * 
+ *
  * @author Sahat Yalkabov <https://github.com/sahat>
  * @copyright Method taken from https://github.com/sahat/satellizer
- * 
+ *
  * @param  {String} Query string
  * @return {String}
  */
@@ -145,75 +145,11 @@ function parseQueryString(str) {
   return obj;
 }
 
-/**
- * Decode base64 string
- * @author Sahat Yalkabov <https://github.com/sahat>
- * @copyright Method taken from https://github.com/sahat/satellizer
- * 
- * @param  {String} str base64 encoded string
- * @return {Object}
- */
-function decodeBase64(str) {
-  var buffer;
-  if (typeof module !== 'undefined' && module.exports) {
-    try {
-      buffer = require('buffer').Buffer;
-    } catch (err) {
-      // noop
-    }
-  }
-
-  var fromCharCode = String.fromCharCode;
-
-  var re_btou = new RegExp([
-    '[\xC0-\xDF][\x80-\xBF]',
-    '[\xE0-\xEF][\x80-\xBF]{2}',
-    '[\xF0-\xF7][\x80-\xBF]{3}'
-  ].join('|'), 'g');
-
-  var cb_btou = function (cccc) {
-    switch (cccc.length) {
-      case 4:
-        var cp = ((0x07 & cccc.charCodeAt(0)) << 18)
-          | ((0x3f & cccc.charCodeAt(1)) << 12)
-          | ((0x3f & cccc.charCodeAt(2)) << 6)
-          | (0x3f & cccc.charCodeAt(3));
-        var offset = cp - 0x10000;
-        return (fromCharCode((offset >>> 10) + 0xD800)
-        + fromCharCode((offset & 0x3FF) + 0xDC00));
-      case 3:
-        return fromCharCode(
-          ((0x0f & cccc.charCodeAt(0)) << 12)
-          | ((0x3f & cccc.charCodeAt(1)) << 6)
-          | (0x3f & cccc.charCodeAt(2))
-        );
-      default:
-        return fromCharCode(
-          ((0x1f & cccc.charCodeAt(0)) << 6)
-          | (0x3f & cccc.charCodeAt(1))
-        );
-    }
-  };
-
-  var btou = function (b) {
-    return b.replace(re_btou, cb_btou);
-  };
-
-  var _decode = buffer ? function (a) {
-    return (a.constructor === buffer.constructor
-      ? a : new buffer(a, 'base64')).toString();
-  }
-    : function (a) {
-    return btou(atob(a));
-  };
-
-  return _decode(
-    String(str).replace(/[-_]/g, function (m0) {
-      return m0 === '-' ? '+' : '/';
-    })
-      .replace(/[^A-Za-z0-9\+\/]/g, '')
-  );
-}
+var decodeJWT = function (token) {
+  var base64Url = token.split('.')[1];
+  var base64 = base64Url.replace('-', '+').replace('_', '/');
+  return JSON.parse(window.atob(base64))
+};
 
 function parseCookies(str) {
   if (str.length === 0) { return {}; }
@@ -506,31 +442,13 @@ var defaultOptions = {
    * Default request interceptor for Axios library
    * @context {VueAuthenticate}
    */
-  bindRequestInterceptor: function ($auth) {
-    var tokenHeader = $auth.options.tokenHeader;
-
-    $auth.$http.interceptors.request.use(function (config) {
-      if ($auth.isAuthenticated()) {
-        config.headers[tokenHeader] = [
-          $auth.options.tokenType, $auth.getToken()
-        ].join(' ');
-      } else {
-        delete config.headers[tokenHeader];
-      }
-      return config
-    });
-  },
+  bindRequestInterceptor: function ($auth) {},
 
   /**
    * Default response interceptor for Axios library
    * @contect {VueAuthenticate}
    */
-  bindResponseInterceptor: function ($auth) {
-    $auth.$http.interceptors.response.use(function (response) {
-      $auth.setToken(response);
-      return response
-    });
-  },
+  bindResponseInterceptor: function ($auth) {},
 
   providers: {
     facebook: {
@@ -913,7 +831,7 @@ var OAuth = function OAuth($http, storage, providerConfig, options) {
 };
 
 /**
- * Initialize OAuth1 process 
+ * Initialize OAuth1 process
  * @param{Object} userData User data
  * @return {Promise}
  */
@@ -1044,8 +962,11 @@ OAuth2.prototype.init = function init (userData) {
   var url = [this.providerConfig.authorizationEndpoint, this._stringifyRequestParams()].join('?');
 
   this.oauthPopup = new OAuthPopup(url, this.providerConfig.name, this.providerConfig.popupOptions);
-    
+
   return new Promise(function (resolve, reject) {
+    if (this$1.options.replaceWindow) {
+      return window.location.href = url
+    }
     this$1.oauthPopup.open(this$1.providerConfig.redirectUri).then(function (response) {
       if (this$1.providerConfig.responseType === 'token' || !this$1.providerConfig.url) {
         return resolve(response)
@@ -1066,7 +987,7 @@ OAuth2.prototype.init = function init (userData) {
  * Exchange temporary oauth data for access token
  * @author Sahat Yalkabov <https://github.com/sahat>
  * @copyright Method taken from https://github.com/sahat/satellizer
- * 
+ *
  * @param{[type]} oauth  [description]
  * @param{[type]} userData [description]
  * @return {[type]}        [description]
@@ -1114,7 +1035,7 @@ OAuth2.prototype.exchangeForToken = function exchangeForToken (oauth, userData) 
  * Stringify oauth params
  * @author Sahat Yalkabov <https://github.com/sahat>
  * @copyright Method taken from https://github.com/sahat/satellizer
- * 
+ *
  * @return {String}
  */
 OAuth2.prototype._stringifyRequestParams = function _stringifyRequestParams () {
@@ -1206,22 +1127,32 @@ var VueAuthenticate = function VueAuthenticate($http, overrideOptions) {
  * @return {Boolean}
  */
 VueAuthenticate.prototype.isAuthenticated = function isAuthenticated () {
+  var now = Math.round(new Date().getTime() / 1000);
   var token = this.storage.getItem(this.tokenName);
+  var idToken = this.storage.getItem('id_token');
+  var expiresAt = this.storage.getItem('expires_at');
+  var idTokenExp;
+  expiresAt = isString(expiresAt) ? Number(expiresAt) : expiresAt;
 
-  if (token) {// Token is present
-    if (token.split('.').length === 3) {// Token with a valid JWT format XXX.YYY.ZZZ
+  if (idToken) {
+    idTokenExp = decodeJWT(idToken).exp;
+  }
+
+  if (token) { // Token is present
+    if (token.split('.').length === 3) { // Token with a valid JWT format XXX.YYY.ZZZ
       try { // Could be a valid JWT or an access token with the same format
-        var base64Url = token.split('.')[1];
-        var base64 = base64Url.replace('-', '+').replace('_', '/');
-        var exp = JSON.parse(window.atob(base64)).exp;
-        if (typeof exp === 'number') {// JWT with an optonal expiration claims
-          return Math.round(new Date().getTime() / 1000) < exp;
+        var ref = decodeJWT(token);
+          var exp = ref.exp;
+        if (typeof exp === 'number') { // JWT with an optonal expiration claims
+          return now < exp
         }
       } catch (e) {
-        return true;// Pass: Non-JWT token that looks like JWT
+        return true // Pass: Non-JWT token that looks like JWT
       }
     }
-    return true;// Pass: All other tokens
+    if (idTokenExp) { return now < idTokenExp }
+    if (expiresAt) { return now < expiresAt }
+    return true // Pass: All other tokens
   }
   return false
 };
@@ -1242,7 +1173,7 @@ VueAuthenticate.prototype.setToken = function setToken (response) {
   if (response[this.options.responseDataKey]) {
     response = response[this.options.responseDataKey];
   }
-    
+
   var token;
   if (response.access_token) {
     if (isObject(response.access_token) && isObject(response.access_token[this.options.responseDataKey])) {
@@ -1259,20 +1190,30 @@ VueAuthenticate.prototype.setToken = function setToken (response) {
   if (token) {
     this.storage.setItem(this.tokenName, token);
   }
+
+  if (response.id_token) { this.storage.setItem('id_token', response.id_token); }
+  if (response.expires_in) {
+    var expires_at = response.expires_in * 1000 + new Date().getTime();
+    this.storage.setItem('expires_at', expires_at);
+  }
+  if (response.token_type) { this.storage.setItem('token_type', response.token_type); }
 };
 
 VueAuthenticate.prototype.getPayload = function getPayload () {
   var token = this.storage.getItem(this.tokenName);
+  var idToken = this.storage.getItem('id_token');
 
   if (token && token.split('.').length === 3) {
     try {
-      var base64Url = token.split('.')[1];
-      var base64 = base64Url.replace('-', '+').replace('_', '/');
-      return JSON.parse(decodeBase64(base64));
+      return decodeJWT(token)
+    } catch (e) {}
+  } else if (idToken) {
+    try {
+      return decodeJWT(idToken)
     } catch (e) {}
   }
 };
-  
+
 /**
  * Login user using email and password
  * @param{Object} user         User data
@@ -1323,6 +1264,12 @@ VueAuthenticate.prototype.register = function register (user, requestOptions) {
 VueAuthenticate.prototype.logout = function logout (requestOptions) {
     var this$1 = this;
 
+  var clearStorage = function () {
+    this$1.storage.removeItem(this$1.tokenName);
+    this$1.storage.removeItem('id_token');
+    this$1.storage.removeItem('expires_at');
+    this$1.storage.removeItem('token_type');
+  };
   if (!this.isAuthenticated()) {
     return Promise$1.reject(new Error('There is no currently authenticated user'))
   }
@@ -1335,17 +1282,17 @@ VueAuthenticate.prototype.logout = function logout (requestOptions) {
     requestOptions.withCredentials = requestOptions.withCredentials || this.options.withCredentials;
 
     return this.$http(requestOptions).then(function (response) {
-      this$1.storage.removeItem(this$1.tokenName);
+      clearStorage();
     })
   } else {
-    this.storage.removeItem(this.tokenName);
-    return Promise$1.resolve();
+    clearStorage();
+    return Promise$1.resolve()
   }
 };
 
 /**
  * Authenticate user using authentication provider
- * 
+ *
  * @param{String} provider     Provider name
  * @param{Object} userData     User data
  * @param{Object} requestOptions Request options
