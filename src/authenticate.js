@@ -1,5 +1,5 @@
 import Promise from './promise.js'
-import { objectExtend, isString, isObject, isFunction, joinUrl, decodeBase64 } from './utils.js'
+import { objectExtend, isString, isObject, isFunction, joinUrl, decodeJWT } from './utils.js'
 import defaultOptions from './options.js'
 import StorageFactory from './storage.js'
 import OAuth1 from './oauth/oauth1.js'
@@ -59,22 +59,31 @@ export default class VueAuthenticate {
    * @return {Boolean}
    */
   isAuthenticated() {
+    const now = Math.round(new Date().getTime() / 1000)
     let token = this.storage.getItem(this.tokenName)
+    let idToken = this.storage.getItem('id_token')
+    let expiresAt = this.storage.getItem('expires_at')
+    let idTokenExp
+    expiresAt = isString(expiresAt) ? Number(expiresAt) : expiresAt
 
-    if (token) {  // Token is present
-      if (token.split('.').length === 3) {  // Token with a valid JWT format XXX.YYY.ZZZ
+    if (idToken) {
+      idTokenExp = decodeJWT(idToken).exp
+    }
+
+    if (token) { // Token is present
+      if (token.split('.').length === 3) { // Token with a valid JWT format XXX.YYY.ZZZ
         try { // Could be a valid JWT or an access token with the same format
-          const base64Url = token.split('.')[1];
-          const base64 = base64Url.replace('-', '+').replace('_', '/');
-          const exp = JSON.parse(window.atob(base64)).exp;
-          if (typeof exp === 'number') {  // JWT with an optonal expiration claims
-            return Math.round(new Date().getTime() / 1000) < exp;
+          const { exp } = decodeJWT(token)
+          if (typeof exp === 'number') { // JWT with an optonal expiration claims
+            return now < exp
           }
         } catch (e) {
-          return true;  // Pass: Non-JWT token that looks like JWT
+          return true // Pass: Non-JWT token that looks like JWT
         }
       }
-      return true;  // Pass: All other tokens
+      if (idTokenExp) return now < idTokenExp
+      if (expiresAt) return now < expiresAt
+      return true // Pass: All other tokens
     }
     return false
   }
@@ -93,10 +102,10 @@ export default class VueAuthenticate {
    */
   setToken(response) {
     if (response[this.options.responseDataKey]) {
-      response = response[this.options.responseDataKey];
+      response = response[this.options.responseDataKey]
     }
-    
-    let token;
+
+    let token
     if (response.access_token) {
       if (isObject(response.access_token) && isObject(response.access_token[this.options.responseDataKey])) {
         response = response.access_token
@@ -112,20 +121,30 @@ export default class VueAuthenticate {
     if (token) {
       this.storage.setItem(this.tokenName, token)
     }
+
+    if (response.id_token) this.storage.setItem('id_token', response.id_token)
+    if (response.expires_in) {
+      const expires_at = response.expires_in * 1000 + new Date().getTime()
+      this.storage.setItem('expires_at', expires_at)
+    }
+    if (response.token_type) this.storage.setItem('token_type', response.token_type)
   }
 
   getPayload() {
-    const token = this.storage.getItem(this.tokenName);
+    const token = this.storage.getItem(this.tokenName)
+    const idToken = this.storage.getItem('id_token')
 
     if (token && token.split('.').length === 3) {
       try {
-        const base64Url = token.split('.')[1];
-        const base64 = base64Url.replace('-', '+').replace('_', '/');
-        return JSON.parse(decodeBase64(base64));
+        return decodeJWT(token)
+      } catch (e) {}
+    } else if (idToken) {
+      try {
+        return decodeJWT(idToken)
       } catch (e) {}
     }
   }
-  
+
   /**
    * Login user using email and password
    * @param  {Object} user           User data
@@ -170,6 +189,12 @@ export default class VueAuthenticate {
    * @return {Promise}                Request promise
    */
   logout(requestOptions) {
+    const clearStorage = () => {
+      this.storage.removeItem(this.tokenName)
+      this.storage.removeItem('id_token')
+      this.storage.removeItem('expires_at')
+      this.storage.removeItem('token_type')
+    }
     if (!this.isAuthenticated()) {
       return Promise.reject(new Error('There is no currently authenticated user'))
     }
@@ -182,17 +207,17 @@ export default class VueAuthenticate {
       requestOptions.withCredentials = requestOptions.withCredentials || this.options.withCredentials
 
       return this.$http(requestOptions).then((response) => {
-        this.storage.removeItem(this.tokenName)
+        clearStorage()
       })
     } else {
-      this.storage.removeItem(this.tokenName)
-      return Promise.resolve();
+      clearStorage()
+      return Promise.resolve()
     }
   }
 
   /**
    * Authenticate user using authentication provider
-   * 
+   *
    * @param  {String} provider       Provider name
    * @param  {Object} userData       User data
    * @param  {Object} requestOptions Request options

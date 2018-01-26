@@ -25,7 +25,7 @@ export default class OAuth {
   }
 
   /**
-   * Initialize OAuth1 process 
+   * Initialize OAuth1 process
    * @param  {Object} userData User data
    * @return {Promise}
    */
