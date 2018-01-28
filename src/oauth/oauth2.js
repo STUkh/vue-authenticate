@@ -49,7 +49,7 @@ export default class OAuth2 {
     this.oauthPopup = new OAuthPopup(url, this.providerConfig.name, this.providerConfig.popupOptions)
 
     return new Promise((resolve, reject) => {
-      if (this.options.replaceWindow) {
+      if (this.providerConfig.popup === false) {
         return window.location.href = url
       }
       this.oauthPopup.open(this.providerConfig.redirectUri).then((response) => {

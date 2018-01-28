@@ -10,7 +10,6 @@ export default {
   loginUrl: '/auth/login',
   registerUrl: '/auth/register',
   logoutUrl: null,
-  replaceWindow: false,
   storageType: 'localStorage',
   storageNamespace: 'vue-authenticate',
   cookieStorage: {
@@ -168,6 +167,7 @@ export default {
       scopeDelimiter: null,
       state: null,
       oauthType: '2.0',
+      popup: true,
       popupOptions: null,
       responseType: 'code',
       responseParams: {
