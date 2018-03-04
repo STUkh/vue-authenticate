@@ -67,7 +67,9 @@ export default class OAuth {
    * @return {Promise}
    */
   openPopup(response) {
-    // value or Promise
+    if (isFunction(this.providerConfig.authorizationEndpoint)) {
+      this.providerConfig.authorizationEndpoint = this.providerConfig.authorizationEndpoint()
+    }
     Promise.resolve(this.providerConfig.authorizationEndpoint).then(authorizationEndpoint => {
       const url = [authorizationEndpoint, this.buildQueryString(response[this.options.responseDataKey])].join('?');
 

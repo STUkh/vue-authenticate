@@ -1,5 +1,5 @@
 /*!
- * vue-authenticate v1.3.5-alt2
+ * vue-authenticate v1.3.5-alt
  * https://github.com/dgrubelic/vue-authenticate
  * Released under the MIT License.
  */
@@ -919,7 +919,9 @@ OAuth.prototype.getRequestToken = function getRequestToken () {
 OAuth.prototype.openPopup = function openPopup (response) {
     var this$1 = this;
 
-  // value or Promise
+  if (isFunction(this.providerConfig.authorizationEndpoint)) {
+    this.providerConfig.authorizationEndpoint = this.providerConfig.authorizationEndpoint();
+  }
   Promise.resolve(this.providerConfig.authorizationEndpoint).then(function (authorizationEndpoint) {
     var url = [authorizationEndpoint, this$1.buildQueryString(response[this$1.options.responseDataKey])].join('?');
 
@@ -1004,6 +1006,10 @@ OAuth2.prototype.init = function init (userData) {
     this.storage.setItem(stateName, this.providerConfig.state());
   } else if (isString(this.providerConfig.state)) {
     this.storage.setItem(stateName, this.providerConfig.state);
+  }
+
+  if (isFunction(this.providerConfig.authorizationEndpoint)) {
+    this.providerConfig.authorizationEndpoint = this.providerConfig.authorizationEndpoint();
   }
 
   return Promise.resolve(this.providerConfig.authorizationEndpoint).then(function (authorizationEndpoint) {

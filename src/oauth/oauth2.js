@@ -44,6 +44,10 @@ export default class OAuth2 {
       this.storage.setItem(stateName, this.providerConfig.state)
     }
 
+    if (isFunction(this.providerConfig.authorizationEndpoint)) {
+      this.providerConfig.authorizationEndpoint = this.providerConfig.authorizationEndpoint()
+    }
+
     return Promise.resolve(this.providerConfig.authorizationEndpoint).then(authorizationEndpoint => {
       let url = [authorizationEndpoint, this._stringifyRequestParams()].join('?')
       return new OAuthPopup(url, this.providerConfig.name, this.providerConfig.popupOptions)
