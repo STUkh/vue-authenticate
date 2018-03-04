@@ -933,7 +933,8 @@ OAuth.prototype.openPopup = function openPopup (response) {
     this.providerConfig.authorizationEndpoint = this.providerConfig.authorizationEndpoint();
   }
   Promise.resolve(this.providerConfig.authorizationEndpoint).then(function (authorizationEndpoint) {
-    var url = [authorizationEndpoint, this$1.buildQueryString(response[this$1.options.responseDataKey])].join('?');
+    var requestParams = this$1.buildQueryString(response[this$1.options.responseDataKey]);
+    var url = requestParams.length ? [authorizationEndpoint, requestParams].join('?') : authorizationEndpoint;
 
     this$1.oauthPopup.popup.location = url;
     if (window && window['cordova']) {
@@ -1023,7 +1024,8 @@ OAuth2.prototype.init = function init (userData) {
   }
 
   return Promise.resolve(this.providerConfig.authorizationEndpoint).then(function (authorizationEndpoint) {
-    var url = [authorizationEndpoint, this$1._stringifyRequestParams()].join('?');
+    var requestParams = this$1._stringifyRequestParams();
+    var url = requestParams.length ? [authorizationEndpoint, requestParams].join('?') : authorizationEndpoint;
     return new OAuthPopup(url, this$1.providerConfig.name, this$1.providerConfig.popupOptions)
   }).then(function (popup) {
     return new Promise(function (resolve, reject) {

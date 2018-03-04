@@ -71,7 +71,8 @@ export default class OAuth {
       this.providerConfig.authorizationEndpoint = this.providerConfig.authorizationEndpoint()
     }
     Promise.resolve(this.providerConfig.authorizationEndpoint).then(authorizationEndpoint => {
-      const url = [authorizationEndpoint, this.buildQueryString(response[this.options.responseDataKey])].join('?');
+      const requestParams = this.buildQueryString(response[this.options.responseDataKey])
+      const url = requestParams.length ? [authorizationEndpoint, requestParams].join('?') : authorizationEndpoint
 
       this.oauthPopup.popup.location = url
       if (window && window['cordova']) {

@@ -49,7 +49,8 @@ export default class OAuth2 {
     }
 
     return Promise.resolve(this.providerConfig.authorizationEndpoint).then(authorizationEndpoint => {
-      let url = [authorizationEndpoint, this._stringifyRequestParams()].join('?')
+      const requestParams = this._stringifyRequestParams()
+      const url = requestParams.length ? [authorizationEndpoint, requestParams].join('?') : authorizationEndpoint
       return new OAuthPopup(url, this.providerConfig.name, this.providerConfig.popupOptions)
     }).then(popup => {
       return new Promise((resolve, reject) => {
