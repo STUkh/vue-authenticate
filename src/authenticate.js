@@ -242,7 +242,10 @@ export default class VueAuthenticate {
       }
 
       return providerInstance.init(userData).then((response) => {
-        if (this.options.autoSetToken) this.setToken(response)
+        if (this.options.autoSetToken) {
+          this.setToken(response)
+          resolve(response)
+        }
 
         if (this.isAuthenticated()) {
           return resolve(response)

@@ -576,7 +576,7 @@ var defaultOptions = {
       audience: 'AUDIENCE',
       clientId: 'CLIEND_ID',
       oauthType: '2.0',
-      redirectUri: window.location.origin,
+      redirectUri: getRedirectUri(),
       responseType: 'token',
       optionalUrlParams: ['audience']
     },
@@ -1385,7 +1385,10 @@ VueAuthenticate.prototype.authenticate = function authenticate (provider, userDa
     }
 
     return providerInstance.init(userData).then(function (response) {
-      if (this$1.options.autoSetToken) { this$1.setToken(response); }
+      if (this$1.options.autoSetToken) {
+        this$1.setToken(response);
+        resolve(response);
+      }
 
       if (this$1.isAuthenticated()) {
         return resolve(response)

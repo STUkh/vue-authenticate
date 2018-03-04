@@ -160,7 +160,7 @@ export default {
       audience: 'AUDIENCE',
       clientId: 'CLIEND_ID',
       oauthType: '2.0',
-      redirectUri: window.location.origin,
+      redirectUri: getRedirectUri(),
       responseType: 'token',
       optionalUrlParams: ['audience']
     },
