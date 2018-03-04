@@ -156,7 +156,7 @@ export default class VueAuthenticate {
     requestOptions.withCredentials = requestOptions.withCredentials || this.options.withCredentials
 
     return this.$http(requestOptions).then((response) => {
-      this.setToken(response)
+      if (this.options.autoSetToken) this.setToken(response)
       return response
     })
   }
@@ -175,7 +175,7 @@ export default class VueAuthenticate {
     requestOptions.withCredentials = requestOptions.withCredentials || this.options.withCredentials
 
     return this.$http(requestOptions).then((response) => {
-      this.setToken(response)
+      if (this.options.autoSetToken) this.setToken(response)
       return response
     })
   }
@@ -242,7 +242,7 @@ export default class VueAuthenticate {
       }
 
       return providerInstance.init(userData).then((response) => {
-        this.setToken(response)
+        if (this.options.autoSetToken) this.setToken(response)
 
         if (this.isAuthenticated()) {
           return resolve(response)

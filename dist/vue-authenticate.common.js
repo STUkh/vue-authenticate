@@ -1,5 +1,5 @@
 /*!
- * vue-authenticate v1.3.5-beta.1
+ * vue-authenticate v1.3.5-alternate
  * https://github.com/dgrubelic/vue-authenticate
  * Released under the MIT License.
  */
@@ -448,6 +448,7 @@ var defaultOptions = {
   logoutUrl: null,
   storageType: 'localStorage',
   storageNamespace: 'vue-authenticate',
+  autoSetToken: true,
   cookieStorage: {
     domain: getCookieDomainUrl(),
     path: '/',
@@ -1264,7 +1265,7 @@ VueAuthenticate.prototype.login = function login (user, requestOptions) {
   requestOptions.withCredentials = requestOptions.withCredentials || this.options.withCredentials;
 
   return this.$http(requestOptions).then(function (response) {
-    this$1.setToken(response);
+    if (this$1.options.autoSetToken) { this$1.setToken(response); }
     return response
   })
 };
@@ -1285,7 +1286,7 @@ VueAuthenticate.prototype.register = function register (user, requestOptions) {
   requestOptions.withCredentials = requestOptions.withCredentials || this.options.withCredentials;
 
   return this.$http(requestOptions).then(function (response) {
-    this$1.setToken(response);
+    if (this$1.options.autoSetToken) { this$1.setToken(response); }
     return response
   })
 };
@@ -1356,7 +1357,7 @@ VueAuthenticate.prototype.authenticate = function authenticate (provider, userDa
     }
 
     return providerInstance.init(userData).then(function (response) {
-      this$1.setToken(response);
+      if (this$1.options.autoSetToken) { this$1.setToken(response); }
 
       if (this$1.isAuthenticated()) {
         return resolve(response)

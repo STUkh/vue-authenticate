@@ -32,6 +32,7 @@ export default {
   logoutUrl: null,
   storageType: 'localStorage',
   storageNamespace: 'vue-authenticate',
+  autoSetToken: true,
   cookieStorage: {
     domain: getCookieDomainUrl(),
     path: '/',
