@@ -911,14 +911,19 @@ OAuth.prototype.getRequestToken = function getRequestToken () {
  * @return {Promise}
  */
 OAuth.prototype.openPopup = function openPopup (response) {
-  var url = [this.providerConfig.authorizationEndpoint, this.buildQueryString(response[this.options.responseDataKey])].join('?');
+    var this$1 = this;
 
-  this.oauthPopup.popup.location = url;
-  if (window && window['cordova']) {
-    return this.oauthPopup.open(this.providerConfig.redirectUri)
-  } else {
-    return this.oauthPopup.pooling(this.providerConfig.redirectUri)
-  }
+  // value or Promise
+  Promise.resolve(this.providerConfig.authorizationEndpoint).then(function (authorizationEndpoint) {
+    var url = [authorizationEndpoint, this$1.buildQueryString(response[this$1.options.responseDataKey])].join('?');
+
+    this$1.oauthPopup.popup.location = url;
+    if (window && window['cordova']) {
+      return this$1.oauthPopup.open(this$1.providerConfig.redirectUri)
+    } else {
+      return this$1.oauthPopup.pooling(this$1.providerConfig.redirectUri)
+    }
+  });
 };
 
 /**

@@ -44,28 +44,29 @@ export default class OAuth2 {
       this.storage.setItem(stateName, this.providerConfig.state)
     }
 
-    let url = [this.providerConfig.authorizationEndpoint, this._stringifyRequestParams()].join('?')
-
-    this.oauthPopup = new OAuthPopup(url, this.providerConfig.name, this.providerConfig.popupOptions)
-
-    return new Promise((resolve, reject) => {
-      if (this.providerConfig.popup === false) {
-        return window.location.href = url
-      }
-      this.oauthPopup.open(this.providerConfig.redirectUri).then((response) => {
-        if (this.providerConfig.responseType === 'token' || !this.providerConfig.url) {
-          return resolve(response)
+    return Promise.resolve(this.providerConfig.authorizationEndpoint).then(authorizationEndpoint => {
+      let url = [authorizationEndpoint, this._stringifyRequestParams()].join('?')
+      return new OAuthPopup(url, this.providerConfig.name, this.providerConfig.popupOptions)
+    }).then(popup => {
+      return new Promise((resolve, reject) => {
+        if (this.providerConfig.popup === false) {
+          return window.location.href = url
         }
+        popup.open(this.providerConfig.redirectUri).then((response) => {
+          if (this.providerConfig.responseType === 'token' || !this.providerConfig.url) {
+            return resolve(response)
+          }
 
-        if (response.state && response.state !== this.storage.getItem(stateName)) {
-          return reject(new Error('State parameter value does not match original OAuth request state value'))
-        }
+          if (response.state && response.state !== this.storage.getItem(stateName)) {
+            return reject(new Error('State parameter value does not match original OAuth request state value'))
+          }
 
-        resolve(this.exchangeForToken(response, userData))
-      }).catch((err) => {
-        reject(err)
+          resolve(this.exchangeForToken(response, userData))
+        }).catch((err) => {
+          reject(err)
+        })
       })
-    })
+     })
   }
 
   /**

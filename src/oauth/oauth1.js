@@ -67,14 +67,17 @@ export default class OAuth {
    * @return {Promise}
    */
   openPopup(response) {
-    const url = [this.providerConfig.authorizationEndpoint, this.buildQueryString(response[this.options.responseDataKey])].join('?');
+    // value or Promise
+    Promise.resolve(this.providerConfig.authorizationEndpoint).then(authorizationEndpoint => {
+      const url = [authorizationEndpoint, this.buildQueryString(response[this.options.responseDataKey])].join('?');
 
-    this.oauthPopup.popup.location = url
-    if (window && window['cordova']) {
-      return this.oauthPopup.open(this.providerConfig.redirectUri)
-    } else {
-      return this.oauthPopup.pooling(this.providerConfig.redirectUri)
-    }
+      this.oauthPopup.popup.location = url
+      if (window && window['cordova']) {
+        return this.oauthPopup.open(this.providerConfig.redirectUri)
+      } else {
+        return this.oauthPopup.pooling(this.providerConfig.redirectUri)
+      }
+    })
   }
 
   /**
