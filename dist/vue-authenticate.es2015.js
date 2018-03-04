@@ -1387,14 +1387,9 @@ VueAuthenticate.prototype.authenticate = function authenticate (provider, userDa
     return providerInstance.init(userData).then(function (response) {
       if (this$1.options.autoSetToken) {
         this$1.setToken(response);
-        resolve(response);
+        return this$1.isAuthenticated() ? resolve(response) : reject(new Error('Authentication failed'))
       }
-
-      if (this$1.isAuthenticated()) {
-        return resolve(response)
-      } else {
-        return reject(new Error('Authentication failed'))
-      }
+      return resolve(response);
     }).catch(function (err) { return reject(err); })
   })
 };
