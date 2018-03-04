@@ -1,5 +1,5 @@
 /*!
- * vue-authenticate v1.3.5-alternate
+ * vue-authenticate v1.3.5-alt2
  * https://github.com/dgrubelic/vue-authenticate
  * Released under the MIT License.
  */
@@ -1000,28 +1000,29 @@ OAuth2.prototype.init = function init (userData) {
     this.storage.setItem(stateName, this.providerConfig.state);
   }
 
-  var url = [this.providerConfig.authorizationEndpoint, this._stringifyRequestParams()].join('?');
-
-  this.oauthPopup = new OAuthPopup(url, this.providerConfig.name, this.providerConfig.popupOptions);
-
-  return new Promise(function (resolve, reject) {
-    if (this$1.providerConfig.popup === false) {
-      return window.location.href = url
-    }
-    this$1.oauthPopup.open(this$1.providerConfig.redirectUri).then(function (response) {
-      if (this$1.providerConfig.responseType === 'token' || !this$1.providerConfig.url) {
-        return resolve(response)
+  return Promise.resolve(this.providerConfig.authorizationEndpoint).then(function (authorizationEndpoint) {
+    var url = [authorizationEndpoint, this$1._stringifyRequestParams()].join('?');
+    return new OAuthPopup(url, this$1.providerConfig.name, this$1.providerConfig.popupOptions)
+  }).then(function (popup) {
+    return new Promise(function (resolve, reject) {
+      if (this$1.providerConfig.popup === false) {
+        return window.location.href = url
       }
+      popup.open(this$1.providerConfig.redirectUri).then(function (response) {
+        if (this$1.providerConfig.responseType === 'token' || !this$1.providerConfig.url) {
+          return resolve(response)
+        }
 
-      if (response.state && response.state !== this$1.storage.getItem(stateName)) {
-        return reject(new Error('State parameter value does not match original OAuth request state value'))
-      }
+        if (response.state && response.state !== this$1.storage.getItem(stateName)) {
+          return reject(new Error('State parameter value does not match original OAuth request state value'))
+        }
 
-      resolve(this$1.exchangeForToken(response, userData));
-    }).catch(function (err) {
-      reject(err);
-    });
-  })
+        resolve(this$1.exchangeForToken(response, userData));
+      }).catch(function (err) {
+        reject(err);
+      });
+    })
+   })
 };
 
 /**
