@@ -1,11 +1,11 @@
 import Promise from '../promise.js'
-import { objectExtend, parseQueryString, getFullUrlPath, isUndefined } from '../utils.js'
+import { objectExtend, parseQueryString, getFullUrlPath, isDefined, isUndefined } from '../utils.js'
 
 /**
  * OAuth2 popup management class
- * 
+ *
  * @author Sahat Yalkabov <https://github.com/sahat>
- * @copyright Class mostly taken from https://github.com/sahat/satellizer 
+ * @copyright Class mostly taken from https://github.com/sahat/satellizer
  * and adjusted to fit vue-authenticate library
  */
 export default class OAuthPopup {
@@ -77,7 +77,8 @@ export default class OAuthPopup {
   }
 
   _stringifyOptions() {
-    let options = []
+    const popupOffset = this._getPopupOffset()
+    let options = [`top=${popupOffset.top}`, `left=${popupOffset.left}`]
     for (var optionKey in this.popupOptions) {
       if (!isUndefined(this.popupOptions[optionKey])) {
         options.push(`${optionKey}=${this.popupOptions[optionKey]}`)
@@ -85,4 +86,18 @@ export default class OAuthPopup {
     }
     return options.join(',')
   }
+
+  _getPopupOffset() {
+    // Fixes dual-screen position                         Most browsers      Firefox
+    const dualScreenLeft = isDefined(window.screenLeft) ? window.screenLeft : screen.left;
+    const dualScreenTop = isDefined(window.screenTop) ? window.screenTop : screen.top;
+
+    const width = window.innerWidth ? window.innerWidth : document.documentElement.clientWidth ? document.documentElement.clientWidth : screen.width;
+    const height = window.innerHeight ? window.innerHeight : document.documentElement.clientHeight ? document.documentElement.clientHeight : screen.height;
+
+    const left = ((width / 2) - (this.popupOptions.width / 2)) + dualScreenLeft;
+    const top = ((height / 2) - (this.popupOptions.height / 2)) + dualScreenTop;
+    return { left, top }
+  }
+
 }

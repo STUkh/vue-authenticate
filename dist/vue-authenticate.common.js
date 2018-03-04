@@ -43,7 +43,9 @@ function isUndefined(value) {
   return typeof value === 'undefined'
 }
 
-
+function isDefined(value) {
+  return typeof value !== 'undefined'
+}
 
 function isObject(value) {
   return value !== null && typeof value === 'object'
@@ -760,9 +762,9 @@ function StorageFactory(options) {
 
 /**
  * OAuth2 popup management class
- * 
+ *
  * @author Sahat Yalkabov <https://github.com/sahat>
- * @copyright Class mostly taken from https://github.com/sahat/satellizer 
+ * @copyright Class mostly taken from https://github.com/sahat/satellizer
  * and adjusted to fit vue-authenticate library
  */
 var OAuthPopup = function OAuthPopup(url, name, popupOptions) {
@@ -837,13 +839,27 @@ OAuthPopup.prototype.pooling = function pooling (redirectUri) {
 OAuthPopup.prototype._stringifyOptions = function _stringifyOptions () {
     var this$1 = this;
 
-  var options = [];
+  var popupOffset = this._getPopupOffset();
+  var options = [("top=" + (popupOffset.top)), ("left=" + (popupOffset.left))];
   for (var optionKey in this$1.popupOptions) {
     if (!isUndefined(this$1.popupOptions[optionKey])) {
       options.push((optionKey + "=" + (this$1.popupOptions[optionKey])));
     }
   }
   return options.join(',')
+};
+
+OAuthPopup.prototype._getPopupOffset = function _getPopupOffset () {
+  // Fixes dual-screen position                       Most browsers    Firefox
+  var dualScreenLeft = isDefined(window.screenLeft) ? window.screenLeft : screen.left;
+  var dualScreenTop = isDefined(window.screenTop) ? window.screenTop : screen.top;
+
+  var width = window.innerWidth ? window.innerWidth : document.documentElement.clientWidth ? document.documentElement.clientWidth : screen.width;
+  var height = window.innerHeight ? window.innerHeight : document.documentElement.clientHeight ? document.documentElement.clientHeight : screen.height;
+
+  var left = ((width / 2) - (this.popupOptions.width / 2)) + dualScreenLeft;
+  var top = ((height / 2) - (this.popupOptions.height / 2)) + dualScreenTop;
+  return { left: left, top: top }
 };
 
 var defaultProviderConfig = {
