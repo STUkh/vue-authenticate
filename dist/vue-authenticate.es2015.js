@@ -1026,12 +1026,14 @@ OAuth2.prototype.init = function init (userData) {
   return Promise.resolve(this.providerConfig.authorizationEndpoint).then(function (authorizationEndpoint) {
     var requestParams = this$1._stringifyRequestParams();
     var url = requestParams.length ? [authorizationEndpoint, requestParams].join('?') : authorizationEndpoint;
+    if (this$1.providerConfig.popup === false) {
+      window.location.href = url;
+      return null
+    }
     return new OAuthPopup(url, this$1.providerConfig.name, this$1.providerConfig.popupOptions)
   }).then(function (popup) {
     return new Promise(function (resolve, reject) {
-      if (this$1.providerConfig.popup === false) {
-        return window.location.href = url
-      }
+      if (!popup) { reject(); }
       popup.open(this$1.providerConfig.redirectUri).then(function (response) {
         if (this$1.providerConfig.responseType === 'token' || !this$1.providerConfig.url) {
           return resolve(response)
